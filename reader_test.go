@@ -1,4 +1,4 @@
-package prefixedreader
+package prefixedio
 
 import (
 	"bytes"

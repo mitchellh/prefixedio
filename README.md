@@ -1,15 +1,15 @@
-# prefixed-reader
+# prefixedio
 
-`prefixed-reader` (Golang package: `prefixedreader`) is a package for Go
+`prefixedio` (Golang package: `prefixedio`) is a package for Go
 that takes an `io.Reader` and de-multiplexes line-oriented data based
 on a line prefix to a set of readers.
 
 ## Installation and Usage
 
-Install using `go get github.com/mitchellh/prefixed-reader`.
+Install using `go get github.com/mitchellh/prefixedio`.
 
 Full documentation is available at
-http://godoc.org/github.com/mitchellh/prefixed-reader
+http://godoc.org/github.com/mitchellh/prefixedio
 
 Below is an example of its usage ignoring errors:
 
@@ -18,7 +18,7 @@ Below is an example of its usage ignoring errors:
 var r io.Reader
 
 // Initialize the prefixed reader
-pr, _ := prefixedreader.New(r)
+pr, _ := prefixedio.New(r)
 
 // Grab readers for a couple prefixes
 errR, _ := pr.Prefix("err: ")
