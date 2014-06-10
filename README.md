@@ -8,6 +8,9 @@ on a line prefix to a set of readers.
 
 Install using `go get github.com/mitchellh/prefixed-reader`.
 
+Full documentation is available at
+http://godoc.org/github.com/mitchellh/prefixed-reader
+
 Below is an example of its usage ignoring errors:
 
 ```go
