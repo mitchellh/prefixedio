@@ -12,6 +12,8 @@ import (
 // Reader reads from another io.Reader and de-multiplexes line-oriented
 // data into different io.Reader streams.
 //
+// Lines are delimited with the '\n' character.
+//
 // When `Read` is called, any data that doesn't currently have a prefix
 // registered will be discarded. Data won't start being discarded until
 // the first Read is called on a prefix. Once the first Read is called,
@@ -44,6 +46,9 @@ func New(r io.Reader) (*Reader, error) {
 // in a full line of output (including the line separator),
 // but is exposed as an io.Reader for useful utility interoperating
 // with other Go libraries.
+//
+// The data read has the prefix stripped, but contains the line
+// delimiter.
 func (r *Reader) Prefix(p string) (io.Reader, error) {
 	r.l.Lock()
 	defer r.l.Unlock()
