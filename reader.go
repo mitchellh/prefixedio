@@ -109,7 +109,7 @@ func (r *Reader) read() {
 
 				// Make sure we write all the data before we exit.
 				for n < len(data) {
-					ni, err := pw.Write(line[len(p):])
+					ni, err := pw.Write(data[n:])
 					if err != nil {
 						break
 					}
