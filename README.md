@@ -18,7 +18,7 @@ Below is an example of its usage ignoring errors:
 var r io.Reader
 
 // Initialize the prefixed reader
-pr, _ := prefixedio.New(r)
+pr, _ := prefixedio.NewReader(r)
 
 // Grab readers for a couple prefixes
 errR, _ := pr.Prefix("err: ")
