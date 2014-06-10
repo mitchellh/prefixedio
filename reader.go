@@ -32,8 +32,8 @@ type Reader struct {
 	once sync.Once
 }
 
-// New creates a new Reader with the given io.Reader.
-func New(r io.Reader) (*Reader, error) {
+// NewReader creates a new Reader with the given io.Reader.
+func NewReader(r io.Reader) (*Reader, error) {
 	if r == nil {
 		return nil, errors.New("Reader must not be nil")
 	}

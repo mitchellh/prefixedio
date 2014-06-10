@@ -11,7 +11,7 @@ func TestReader(t *testing.T) {
 	var fooBuf, barBuf bytes.Buffer
 
 	original := bytes.NewReader([]byte(strings.TrimSpace(testInput)))
-	r, err := New(original)
+	r, err := NewReader(original)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
