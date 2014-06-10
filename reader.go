@@ -24,10 +24,12 @@ import (
 // buffers. Therefore, be sure to be actively reading from all registered
 // prefixes, otherwise you can encounter deadlock scenarios.
 type Reader struct {
-	r        io.Reader
+	done     bool
 	prefixes map[string]*io.PipeWriter
-	l        sync.Mutex
-	once     sync.Once
+	r        io.Reader
+
+	l    sync.Mutex
+	once sync.Once
 }
 
 // New creates a new Reader with the given io.Reader.
@@ -64,6 +66,10 @@ func (r *Reader) Prefix(p string) (io.Reader, error) {
 	pr, pw := io.Pipe()
 	r.prefixes[p] = pw
 
+	if r.done {
+		pw.Close()
+	}
+
 	return &prefixReader{
 		r:  r,
 		pr: pr,
@@ -83,6 +89,12 @@ func (r *Reader) init() {
 // read runs in a goroutine and performs a read on the reader,
 // dispatching lines to prefixes where necessary.
 func (r *Reader) read() {
+	defer func() {
+		r.l.Lock()
+		defer r.l.Unlock()
+		r.done = true
+	}()
+
 	buf := bufio.NewReader(r.r)
 
 	for {
