@@ -90,6 +90,7 @@ func (r *Reader) init() {
 // dispatching lines to prefixes where necessary.
 func (r *Reader) read() {
 	var err error
+	var lastPrefix string
 	buf := bufio.NewReader(r.r)
 
 	for {
@@ -104,23 +105,33 @@ func (r *Reader) read() {
 
 		// Go through each prefix and write if the line matches.
 		// If no lines match, the data is lost.
+		var prefix string
 		r.l.Lock()
-		for p, pw := range r.prefixes {
+		for p, _ := range r.prefixes {
 			if bytes.HasPrefix(line, []byte(p)) {
-				data := line[len(p):]
-				n := 0
+				prefix = p
+				line = line[len(p):]
+				break
+			}
+		}
 
-				// Make sure we write all the data before we exit.
-				for n < len(data) {
-					ni, err := pw.Write(data[n:])
-					if err != nil {
-						break
-					}
+		if prefix == "" {
+			prefix = lastPrefix
+		}
 
-					n += ni
+		if prefix != "" {
+			pw := r.prefixes[prefix]
+			lastPrefix = prefix
+
+			// Make sure we write all the data before we exit.
+			n := 0
+			for n < len(line) {
+				ni, err := pw.Write(line[n:])
+				if err != nil {
+					break
 				}
 
-				break
+				n += ni
 			}
 		}
 		r.l.Unlock()

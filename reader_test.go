@@ -55,6 +55,7 @@ const testInput = `
 foo: 1
 bar: 2
 bar: 3
+42
 foo: 4
 foo: 5
 bar: 6
@@ -67,4 +68,5 @@ const testInputFoo = `1
 
 const testInputBar = `2
 3
+42
 6`
