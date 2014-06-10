@@ -104,7 +104,7 @@ func (r *Reader) read() {
 		r.l.Lock()
 		for p, pw := range r.prefixes {
 			if bytes.HasPrefix(line, []byte(p)) {
-				pw.Write([]byte(line[len(p):]))
+				pw.Write(line[len(p):])
 				break
 			}
 		}
