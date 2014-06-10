@@ -89,26 +89,17 @@ func (r *Reader) init() {
 // read runs in a goroutine and performs a read on the reader,
 // dispatching lines to prefixes where necessary.
 func (r *Reader) read() {
-	defer func() {
-		r.l.Lock()
-		defer r.l.Unlock()
-		r.done = true
-	}()
-
+	var err error
 	buf := bufio.NewReader(r.r)
 
 	for {
-		line, err := buf.ReadBytes('\n')
+		var line []byte
+		line, err = buf.ReadBytes('\n')
 
 		// If an error occurred and its not an EOF, then report that
 		// error to all pipes and exit.
 		if err != nil && err != io.EOF {
-			r.l.Lock()
-			defer r.l.Unlock()
-			for _, pw := range r.prefixes {
-				pw.CloseWithError(err)
-			}
-			return
+			break
 		}
 
 		// Go through each prefix and write if the line matches.
@@ -135,12 +126,23 @@ func (r *Reader) read() {
 		r.l.Unlock()
 
 		if err == io.EOF {
-			r.l.Lock()
-			defer r.l.Unlock()
-			for _, pw := range r.prefixes {
-				pw.Close()
-			}
-			return
+			break
+		}
+	}
+
+	r.l.Lock()
+	defer r.l.Unlock()
+
+	// Mark us done so that we don't create anymore readers
+	r.done = true
+
+	// All previous writers should be closed so that the readers
+	// properly return an EOF (or another error if we had one)
+	for _, pw := range r.prefixes {
+		if err != nil && err != io.EOF {
+			pw.CloseWithError(err)
+		} else {
+			pw.Close()
 		}
 	}
 }
