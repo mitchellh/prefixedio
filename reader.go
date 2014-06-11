@@ -60,7 +60,7 @@ func (r *Reader) Prefix(p string) (io.Reader, error) {
 	}
 
 	if _, ok := r.prefixes[p]; ok {
-		fmt.Errorf("Prefix already registered: %s", p)
+		return nil, fmt.Errorf("Prefix already registered: %s", p)
 	}
 
 	pr, pw := io.Pipe()
