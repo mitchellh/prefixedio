@@ -20,6 +20,10 @@ func TestReader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	_, err = r.Prefix("foo: ")
+	if err == nil {
+		t.Fatalf("expected prefix already registered error")
+	}
 	pBar, err := r.Prefix("bar: ")
 	if err != nil {
 		t.Fatalf("err: %s", err)
