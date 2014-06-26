@@ -8,7 +8,7 @@ import (
 )
 
 func TestReader(t *testing.T) {
-	var fooBuf, barBuf bytes.Buffer
+	var fooBuf, barBuf, defBuf bytes.Buffer
 
 	original := bytes.NewReader([]byte(strings.TrimSpace(testInput)))
 	r, err := NewReader(original)
@@ -28,8 +28,12 @@ func TestReader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	pDefault, err := r.Prefix("")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
 
-	doneCh := make(chan struct{}, 2)
+	doneCh := make(chan struct{}, 3)
 	go func() {
 		if _, err := io.Copy(&fooBuf, pFoo); err != nil {
 			t.Fatalf("err: %s", err)
@@ -42,8 +46,15 @@ func TestReader(t *testing.T) {
 		}
 		doneCh <- struct{}{}
 	}()
+	go func() {
+		if _, err := io.Copy(&defBuf, pDefault); err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		doneCh <- struct{}{}
+	}()
 
 	// Wait for all the reads to be done
+	<-doneCh
 	<-doneCh
 	<-doneCh
 
@@ -53,9 +64,14 @@ func TestReader(t *testing.T) {
 	if barBuf.String() != testInputBar {
 		t.Fatalf("bad: %s", barBuf.String())
 	}
+	if defBuf.String() != testInputDef {
+		t.Fatalf("bad: %s", defBuf.String())
+	}
 }
 
 const testInput = `
+what
+hello
 foo: 1
 bar: 2
 bar: 3
@@ -74,3 +90,7 @@ const testInputBar = `2
 3
 42
 6`
+
+const testInputDef = `what
+hello
+`

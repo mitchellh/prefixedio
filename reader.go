@@ -51,6 +51,9 @@ func NewReader(r io.Reader) (*Reader, error) {
 //
 // The data read has the prefix stripped, but contains the line
 // delimiter.
+//
+// An empty prefix "" will read the data before any other prefix match is
+// found, allowing you to have a default reader before a prefix is matched.
 func (r *Reader) Prefix(p string) (io.Reader, error) {
 	r.l.Lock()
 	defer r.l.Unlock()
@@ -108,6 +111,10 @@ func (r *Reader) read() {
 		var prefix string
 		r.l.Lock()
 		for p, _ := range r.prefixes {
+			if p == "" {
+				continue
+			}
+
 			if bytes.HasPrefix(line, []byte(p)) {
 				prefix = p
 				line = line[len(p):]
@@ -119,8 +126,8 @@ func (r *Reader) read() {
 			prefix = lastPrefix
 		}
 
-		if prefix != "" {
-			pw := r.prefixes[prefix]
+		pw, ok := r.prefixes[prefix]
+		if ok {
 			lastPrefix = prefix
 
 			// Make sure we write all the data before we exit.
