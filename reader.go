@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 )
 
 // Reader reads from another io.Reader and de-multiplexes line-oriented
@@ -24,6 +25,8 @@ import (
 // buffers. Therefore, be sure to be actively reading from all registered
 // prefixes, otherwise you can encounter deadlock scenarios.
 type Reader struct {
+	FlushTimeout time.Duration
+
 	done     bool
 	prefixes map[string]*io.PipeWriter
 	r        io.Reader
@@ -96,9 +99,50 @@ func (r *Reader) read() {
 	var lastPrefix string
 	buf := bufio.NewReader(r.r)
 
+	// Listen for bytes in a goroutine. We do this so that if we're blocking
+	// we can flush the bytes we have after some configured time. There is
+	// probably a way to make this a lot faster but this works for now.
+	byteCh := make(chan byte)
+	doneCh := make(chan error)
+	go func() {
+		defer close(doneCh)
+		for {
+			b, err := buf.ReadByte()
+			if err != nil {
+				doneCh <- err
+				return
+			}
+
+			byteCh <- b
+		}
+	}()
+
+	// Figure out the timeout we wait until we flush if we see no data
+	ft := r.FlushTimeout
+	if ft == 0 {
+		ft = 100 * time.Millisecond
+	}
+
+	lineBuf := make([]byte, 0, 80)
 	for {
-		var line []byte
-		line, err = buf.ReadBytes('\n')
+		line := lineBuf[0:0]
+		for {
+			brk := false
+
+			select {
+			case b := <-byteCh:
+				line = append(line, b)
+				brk = b == '\n'
+			case err = <-doneCh:
+				brk = true
+			case <-time.After(ft):
+				brk = true
+			}
+
+			if brk {
+				break
+			}
+		}
 
 		// If an error occurred and its not an EOF, then report that
 		// error to all pipes and exit.
